@@ -3,7 +3,9 @@ Created on Mar 3, 2014
 for testing different edge detection methods
 @author: Hao
 '''
-import glob
+from glob import glob
+from os import path
+import shutil
 
 import cv2
 import numpy as np
@@ -12,16 +14,21 @@ from scipy.cluster.vq import kmeans2
 
 import blurdetector
 
-img_names = glob.glob('../../images/*.jpg')
+img_names = glob('../../images/*.jpg')
+dummy_img_name= path.basename(img_names[0])
+img_dir = img_names[0].rstrip(dummy_img_name)
 cv2.namedWindow('image',cv2.WINDOW_NORMAL)
 
 ROI_SIZE_INPUT = 50 # meter
 GSD = .03 # meter/pixel
 ROI_LENGTH = ROI_SIZE_INPUT//GSD
 print ROI_LENGTH
+BLUR_WIDTH_THRESHOLD = 13
 widths = []
 
 for name in img_names:
+    src = name
+    base_name = path.basename(name)
     img = cv2.imread(name, cv2.CV_LOAD_IMAGE_GRAYSCALE)
     ROW_COUNT, COL_COUNT = img.shape
     ROW_CENTER= ROW_COUNT//2
@@ -78,6 +85,13 @@ for name in img_names:
         widths.append(avg_widths)    
     else:
         print 'no edges found!'
+        dst = img_dir + 'unknown/' + base_name
+        shutil.move(src,dst)
+        
+    if avg_widths >= BLUR_WIDTH_THRESHOLD:
+        dst = img_dir + 'blurred/' + base_name
+        shutil.move(src,dst)
+
     
     
     img_combined = np.hstack((img_ROI_denoised_equalized,edges))
@@ -97,8 +111,14 @@ line_y_val = np.mean((clusters[0][0], clusters[0][1]))
 #hard coded
 line_y_val = 13
 
-fig = plt.figure()
-ax= fig.gca()
+fig1 = plt.figure('1')
+ax1= fig1.gca()
+plt.subplot(211)
+# img index based
 plt.plot(widths,'r*')
 plt.axhline(line_y_val, xmin=0, xmax=1)
+
+plt.subplot(212)
+#hist
+plt.hist(widths)
 plt.show()
