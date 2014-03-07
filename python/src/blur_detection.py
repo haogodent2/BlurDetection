@@ -1,6 +1,7 @@
 '''
 Created on Mar 3, 2014
-for testing different edge detection methods
+blur detection based on edge pixel counting
+
 @author: Hao
 '''
 import glob
@@ -14,7 +15,7 @@ from matplotlib import pyplot as plt
 from scipy.cluster.vq import kmeans2
 
 
-def blur_detect(img, AREA_SIZE=50, GSD=0.03, BLUR_WIDTH_THRESHOLD=13.0, thresh_type='static', debug_flag=False):
+def blur_detect(img, AREA_SIZE=100, GSD=0.03, BLUR_WIDTH_THRESHOLD=13.0, thresh_type='static', debug_flag=False):
     '''This function detects whether an image is blurry or not based on the width of edges found in the examined area
             input: 
                 img:np.array    source image
@@ -85,13 +86,13 @@ def blur_detect(img, AREA_SIZE=50, GSD=0.03, BLUR_WIDTH_THRESHOLD=13.0, thresh_t
         avg_width = None
         if debug_flag:
             print 'no edges found!'
-            
-    cv2.namedWindow('preview',cv2.WINDOW_NORMAL)
-    img_combined = np.hstack((img_ROI_denoised_equalized,edges))
-    img_resized = cv2.resize(img_combined,(1200,700))
-    cv2.imshow('preview',img_resized)
-    cv2.waitKey(3000)
-    cv2.destroyAllWindows()
+    if debug_flag:
+        cv2.namedWindow('debug',cv2.WINDOW_NORMAL)
+        img_combined = np.hstack((img_ROI_denoised_equalized,edges))
+        img_resized = cv2.resize(img_combined,(1200,700))
+        cv2.imshow('preview',img_resized)
+        cv2.waitKey(5000)
+        cv2.destroyAllWindows()
     
     # setting blur metric threshold
     
@@ -212,7 +213,8 @@ def main():
     
     
     img_dir = '../../images/'
-    BLUR_WIDTH_THRESHOLD_INPUT = 13
+    BLUR_WIDTH_THRESHOLD_INPUT = 13 #pixels
+    AREA_SIZE_INPUT = 100 #meters
     img_paths_list = glob.glob(img_dir+'*.jpg')
     if not img_paths_list:
         print 'did you forget to provide the images???'
@@ -221,11 +223,11 @@ def main():
     for img_path in img_paths_list:
         blur_metric = [img_path]
         img = cv2.imread(img_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
-        blur_output = blur_detect(img , BLUR_WIDTH_THRESHOLD= BLUR_WIDTH_THRESHOLD_INPUT)
+        blur_output = blur_detect(img , AREA_SIZE=AREA_SIZE_INPUT, BLUR_WIDTH_THRESHOLD=BLUR_WIDTH_THRESHOLD_INPUT)
         blur_metric.append(blur_output)
         img_stat.append(blur_metric)
         widths.append(blur_output[0])
-        print blur_metric[0] + ' edge width = ' + str(blur_output[0])
+        print blur_metric[0] + ' avg edge width = ' + str(blur_output[0]) + ' :: '+str(blur_output[2])
        
        
     for img_item in img_stat:
